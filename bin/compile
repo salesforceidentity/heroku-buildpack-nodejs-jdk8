@@ -154,14 +154,66 @@ curl --silent --location $JVM_COMMON_BUILDPACK | tar xzm -C /tmp/jvm-common --st
 . /tmp/jvm-common/bin/util
 . /tmp/jvm-common/bin/java
 
+
+
+
+
+
+
 # install JDK
 javaVersion=$(detect_java_version ${BUILD_DIR})
+
 status_pending "Installing OpenJDK ${javaVersion}"
-echo "install_java ${BUILD_DIR} ${javaVersion}"
-install_java ${BUILD_DIR} ${javaVersion}
-echo "jdk_overlay ${BUILD_DIR}"
+
+
+  baseDir=${BUILD_DIR}
+  if [ ! -d "${baseDir}" ]; then
+    error_return "Invalid directory to install java."
+    return 1
+  fi
+
+  if [ "$(is_supported_java_version ${javaVersion})" != "true" ]; then
+    error_return "Unsupported Java version: $javaVersion"
+    return 1
+  fi
+
+  jdkDir="${baseDir}"/.jdk
+  jdkTarball="${jdkDir}"/jdk.tar.gz
+  javaExe="${jdkDir}/bin/java"
+  mkdir -p "${jdkDir}"
+  if [ ! -f "${jdkTarball}" ] && [ ! -f "${javaExe}" ] || is_java_version_change "${jdkDir}" "${javaVersion}"; then
+    rm -rf "${jdkDir}"
+    mkdir -p "${jdkDir}"
+    jdkUrl=$(_get_jdk_download_url "${javaVersion}")
+    curl --silent --location ${jdkUrl} --output ${jdkTarball}
+    tar pxzf ${jdkTarball} -C "${jdkDir}"
+    rm ${jdkTarball}
+    echo "${javaVersion}" > "${jdkDir}/version"
+    if [ ! -f "${javaExe}" ]; then
+      error_return "Unable to retrieve the JDK."
+      return 1
+    fi
+  fi
+  export JAVA_HOME=${jdkDir}
+  export PATH="${jdkDir}/bin:${PATH}"
+
+  _install_tools ${baseDir}
+  _create_profile_script ${baseDir}
+  _create_export_script ${JAVA_HOME} "$(pwd)"
+
+
+
+status_pending "jdk_overlay ${BUILD_DIR}"
 jdk_overlay ${BUILD_DIR}
-echo "status_done"
+status_pending "status_done"
 status_done
+
+
+
+
+
+
+
+
 
 
