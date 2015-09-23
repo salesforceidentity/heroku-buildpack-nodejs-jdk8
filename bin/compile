@@ -147,7 +147,7 @@ header "Build succeeded!"
 summarize_build | indent
 
 
-
+header "Installing JDK"
 JVM_COMMON_BUILDPACK=${JVM_COMMON_BUILDPACK:-https://codon-buildpacks.s3.amazonaws.com/buildpacks/heroku/jvm-common.tgz}
 mkdir -p /tmp/jvm-common
 curl --silent --location $JVM_COMMON_BUILDPACK | tar xzm -C /tmp/jvm-common --strip-components=1
@@ -157,8 +157,11 @@ curl --silent --location $JVM_COMMON_BUILDPACK | tar xzm -C /tmp/jvm-common --st
 # install JDK
 javaVersion=$(detect_java_version ${BUILD_DIR})
 status_pending "Installing OpenJDK ${javaVersion}"
+echo "install_java ${BUILD_DIR} ${javaVersion}"
 install_java ${BUILD_DIR} ${javaVersion}
+echo "jdk_overlay ${BUILD_DIR}"
 jdk_overlay ${BUILD_DIR}
+echo "status_done"
 status_done
 
 
