@@ -171,6 +171,7 @@ status_pending "Installing OpenJDK ${javaVersion}"
     error_return "Invalid directory to install java."
     return 1
   fi
+status_pending "Base: ${baseDir}"
 
   if [ "$(is_supported_java_version ${javaVersion})" != "true" ]; then
     error_return "Unsupported Java version: $javaVersion"
@@ -180,11 +181,19 @@ status_pending "Installing OpenJDK ${javaVersion}"
   jdkDir="${baseDir}"/.jdk
   jdkTarball="${jdkDir}"/jdk.tar.gz
   javaExe="${jdkDir}/bin/java"
+
+status_pending "jdkDir: ${jdkDir}"
+status_pending "jdkTarball: ${jdkTarball}"
+status_pending "javaExe: ${javaExe}"
+
+
   mkdir -p "${jdkDir}"
   if [ ! -f "${jdkTarball}" ] && [ ! -f "${javaExe}" ] || is_java_version_change "${jdkDir}" "${javaVersion}"; then
     rm -rf "${jdkDir}"
     mkdir -p "${jdkDir}"
-    jdkUrl=$(_get_jdk_download_url "${javaVersion}")
+    jdkUrl=http://lang-jvm.s3.amazonaws.com/jdk/openjdk1.8.0_60-cedar14.tar.gz
+    
+    
     curl --silent --location ${jdkUrl} --output ${jdkTarball}
     tar pxzf ${jdkTarball} -C "${jdkDir}"
     rm ${jdkTarball}
